@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Registro - FinDash{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-container-card { max-width: 650px; margin: 0 auto; }
+    .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+    .input-icon-wrapper { position: relative; display: flex; align-items: center; }
+    .input-icon-wrapper i { position: absolute; left: 1rem; color: var(--text-muted); font-size: 1.2rem; pointer-events: none; }
+    .input-icon-wrapper .form-input, .input-icon-wrapper select { padding-left: 2.75rem !important; }
+    .type-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 0.5rem; }
+    .type-btn { padding: 0.85rem; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-secondary); border-radius: 10px; font-weight: 700; cursor: pointer; text-align: center; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+    .type-btn:hover { border-color: var(--text-muted); color: var(--text-main); }
+    .type-btn.active[data-type="gasto"] { border-color: var(--danger); color: var(--danger); background: rgba(255,68,68,0.05); box-shadow: 0 0 0 1px var(--danger); }
+    .type-btn.active[data-type="ingreso"] { border-color: var(--success); color: var(--success); background: rgba(0,229,153,0.05); box-shadow: 0 0 0 1px var(--success); }
+    @media (max-width: 600px) { .form-grid-2 { grid-template-columns: 1fr; gap: 1rem; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<header style="margin-bottom:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <div>
+        <h1 style="font-size:2rem;font-weight:800;letter-spacing:-1px;">Nuevo Registro</h1>
+        <p style="color:var(--text-secondary);font-size:0.95rem;">Añade una transacción a tu libro de cuentas principal.</p>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="btn-primary" style="background:transparent;border:1px solid var(--border-color);color:var(--text-main);font-size:0.85rem;padding:0.6rem 1.2rem;">
+        <i class="ph ph-arrow-left"></i> Volver al panel
+    </a>
+</header>
+
+<div class="bento-grid" style="margin-top:0;">
+    <div class="bento-card span-12 form-container-card">
+        <h3 style="font-size:0.8rem;margin-bottom:1.5rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Formulario de Registro</h3>
+
+       <form method="POST" action="{{ url_for('anadir') }}" id="formMovimiento">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="tipo" id="inputTipo" value="gasto">
+
+            <div class="form-group">
+                <label>Naturaleza del Movimiento</label>
+                <div class="type-selector">
+                    <button type="button" class="type-btn active" data-type="gasto" onclick="selectType('gasto')">
+                        <i class="ph-fill ph-trend-down"></i> Gasto / Salida
+                    </button>
+                    <button type="button" class="type-btn" data-type="ingreso" onclick="selectType('ingreso')">
+                        <i class="ph-fill ph-trend-up"></i> Ingreso / Entrada
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label for="fecha">Fecha Operativa</label>
+                    <div class="input-icon-wrapper">
+                        <i class="ph ph-calendar"></i>
+                        <input type="date" id="fecha" name="fecha" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="importe">Importe (€)</label>
+                    <div class="input-icon-wrapper">
+                        <i class="ph ph-currency-eur" id="importeIcon"></i>
+                        <input type="number" step="0.01" min="0.01" id="importe" name="importe" class="form-input" placeholder="0.00" required inputmode="decimal" style="font-weight:700;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="concepto">Concepto / Descripción</label>
+                <div class="input-icon-wrapper">
+                    <i class="ph ph-note"></i>
+                    <input type="text" id="concepto" name="concepto" class="form-input" placeholder="Ej: Compra semanal, Nómina..." required maxlength="80">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="categoria">Categoría</label>
+                <div class="input-icon-wrapper">
+                    <i class="ph ph-tag"></i>
+                    <select id="categoria" name="categoria" required>
+                        <option value="" disabled selected>Selecciona una categoría...</option>
+                        <option value="Alimentación">Alimentación</option>
+                        <option value="Transporte">Transporte</option>
+                        <option value="Ocio">Ocio</option>
+                        <option value="Hogar">Hogar</option>
+                        <option value="Salud">Salud</option>
+                        <option value="Educación">Educación</option>
+                        <option value="Servicios">Servicios</option>
+                        <option value="Otros">Otros</option>
+                        {% for cat in categorias %}
+                            {% if cat not in ['Alimentación','Transporte','Ocio','Hogar','Salud','Educación','Servicios','Otros'] %}
+                                <option value="{{ cat }}">{{ cat }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top:2rem;">
+                <button type="submit" class="btn-primary" style="width:100%;justify-content:center;padding:1rem;">
+                    <i class="ph ph-file-plus" style="font-size:1.2rem;"></i> Asentar Registro Financiero
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    const inputFecha = document.getElementById('fecha');
+    const hoy = new Date();
+    const localISO = (new Date(Date.now() - hoy.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+    inputFecha.value = localISO;
+    inputFecha.max = localISO;
+
+    function selectType(type) {
+        document.getElementById('inputTipo').value = type;
+        document.querySelectorAll('.type-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.type === type) btn.classList.add('active');
+        });
+        const icon = document.getElementById('importeIcon');
+        icon.style.color = type === 'ingreso' ? 'var(--success)' : 'var(--text-muted)';
+    }
+</script>
+{% endblock %}

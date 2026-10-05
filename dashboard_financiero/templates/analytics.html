@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}Analítica Avanzada - FinDash{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Cuadrícula de KPIs superiores */
+    .analytics-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+    .analytics-card-kpi {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+    }
+    .analytics-kpi-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    .analytics-kpi-val {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+
+    /* Contenedores de Gráficas */
+    .chart-main-wrapper {
+        min-height: 380px;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        margin-top: 1rem;
+    }
+    .chart-donut-wrapper {
+        min-height: 280px;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Selector de Periodos */
+    .period-selector {
+        display: flex;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        padding: 0.25rem;
+        border-radius: 10px;
+        gap: 0.25rem;
+    }
+    .period-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: var(--transition);
+        text-decoration: none;
+    }
+    .period-btn:hover {
+        color: var(--text-main);
+    }
+    .period-btn.active {
+        background: var(--primary);
+        color: #000000;
+    }
+
+    /* Desglose de categorías */
+    .category-ranking-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    .category-rank-item {
+        background: var(--bg-main);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1rem;
+    }
+    .category-rank-info {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .category-progress-bg {
+        width: 100%;
+        height: 6px;
+        background: var(--border-color);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .category-progress-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 1s ease-out;
+    }
+
+    @media (max-width: 1024px) {
+        .analytics-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 650px) {
+        .analytics-kpi-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 2rem; font-weight: 800; letter-spacing: -1px;">Métricas Avanzadas</h1>
+        <p style="color: var(--text-secondary); font-size: 0.95rem;">Análisis inteligente del comportamiento de tus flujos de caja y distribución de gastos.</p>
+    </div>
+    <div class="period-selector">
+        <a href="?periodo=mes" class="period-btn {% if rango == 'mes' %}active{% endif %}">Este Mes</a>
+        <a href="?periodo=trimestre" class="period-btn {% if rango == 'trimestre' %}active{% endif %}">90 Días</a>
+        <a href="?periodo=anio" class="period-btn {% if rango == 'anio' %}active{% endif %}">Año</a>
+    </div>
+</header>
+
+<div class="analytics-kpi-grid">
+    <div class="analytics-card-kpi">
+        <div class="analytics-kpi-title">Ingresos Totales</div>
+        <div class="analytics-kpi-val animate-number" style="color: var(--success);" data-final-text="{{ ingresos }}">{{ ingresos }}</div>
+    </div>
+    <div class="analytics-card-kpi">
+        <div class="analytics-kpi-title">Gastos Totales</div>
+        <div class="analytics-kpi-val animate-number" style="color: var(--danger);" data-final-text="{{ gastos }}">{{ gastos }}</div>
+    </div>
+    <div class="analytics-card-kpi">
+        <div class="analytics-kpi-title">Margen Neto (Ahorro)</div>
+        <div class="analytics-kpi-val animate-number" style="color: var(--primary);" data-final-text="{{ ahorro }}">{{ ahorro }}</div>
+    </div>
+    <div class="analytics-card-kpi">
+        <div class="analytics-kpi-title">Eficiencia de Ahorro</div>
+        <div class="analytics-kpi-val" style="color: var(--info);">
+            {% if ahorro_numerico > 0 and ingresos_numerico is defined and ingresos_numerico > 0 %}
+                {{ ((ahorro_numerico / ingresos_numerico) * 100) | round(1) }}%
+            {% else %}
+                0,0%
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="bento-grid" style="margin-top: 0;">
+
+    <div class="bento-card span-12">
+        <h3 style="font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+            <i class="ph ph-chart-bar" style="color: var(--primary);"></i> Balance de Flujos y Margen de Ahorro
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">Comparativa mensual entre lo que ingresas (barras) y lo que gastas frente a tu tendencia neta (línea).</p>
+        <div class="chart-main-wrapper">
+            <canvas id="chartMaestro"></canvas>
+        </div>
+    </div>
+
+    <div class="bento-card span-6">
+        <h3 style="font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+            <i class="ph ph-chart-pie" style="color: var(--warning);"></i> Composición del Gasto
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">Distribución porcentual de tus salidas financieras por categoría operativa.</p>
+        <div class="chart-donut-wrapper">
+            <canvas id="chartDonutCategorias"></canvas>
+        </div>
+    </div>
+
+    <div class="bento-card span-6">
+        <h3 style="font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+            <i class="ph ph-text-align-left" style="color: var(--info);"></i> Impacto por Categoría
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">Desglose y volumen absoluto ordenado por relevancia de consumo en tu presupuesto.</p>
+
+        <div class="category-ranking-list" id="jsCategoryRanking">
+            <div style="padding: 3rem 1rem; text-align: center; color: var(--text-muted);" id="rankingEmptyState">
+                <i class="ph ph-receipt" style="font-size: 2rem; opacity: 0.4; margin-bottom: 0.5rem;"></i>
+                <p style="font-size: 0.85rem;">No hay consumos registrados para analizar.</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // RECEPCIÓN DE DATOS ESTRUCTURADOS DESDE FLASK
+        const datosHistoricos = {{ chart_ahorro_mes | tojson | safe }} || { labels: [], data: [] };
+        const datosCategorias = {{ chart_gastos_categoria | tojson | safe }} || { labels: [], data: [] };
+        const datosIngresosProg = {{ chart_ingresos_mes | tojson | safe }} || { labels: [], data: [] };
+        const datosGastosProg = {{ chart_gastos_mes | tojson | safe }} || { labels: [], data: [] };
+
+        // Captura de estilos globales del sistema de diseño
+        const style = getComputedStyle(document.documentElement);
+        const colorPrimary = style.getPropertyValue('--primary').trim() || '#00E599';
+        const colorSuccess = style.getPropertyValue('--success').trim() || '#00E599';
+        const colorDanger = style.getPropertyValue('--danger').trim() || '#FF4444';
+        const colorWarning = style.getPropertyValue('--warning').trim() || '#f59e0b';
+        const colorInfo = style.getPropertyValue('--info').trim() || '#3b82f6';
+        const borderColor = style.getPropertyValue('--border-color').trim();
+        const textMuted = style.getPropertyValue('--text-muted').trim();
+
+        // Paleta extendida para las categorías de gastos
+        const paletteDonut = [
+            colorDanger, colorWarning, colorInfo, colorPrimary, '#a855f7', '#ec4899', '#6366f1', '#14b8a6'
+        ];
+
+        // Validación de estados vacíos para evitar gráficas rotas
+        if (!datosHistoricos.labels || datosHistoricos.labels.length === 0) {
+            datosHistoricos.labels = ['Sin actividad'];
+            datosHistoricos.data = [0];
+            datosIngresosProg.data = [0];
+            datosGastosProg.data = [0];
+        } else if (datosHistoricos.labels.length === 1) {
+            datosHistoricos.labels.unshift('Inicio');
+            datosHistoricos.data.unshift(0);
+            datosIngresosProg.data.unshift(0);
+            datosGastosProg.data.unshift(0);
+        }
+
+        // =================================================================
+        // GRAPH 1: EL GRÁFICO MAESTRO (MIXTO BARRAS + LÍNEA)
+        // =================================================================
+        const ctxMaestro = document.getElementById('chartMaestro');
+        if (ctxMaestro) {
+            new Chart(ctxMaestro, {
+                type: 'bar',
+                data: {
+                    labels: datosHistoricos.labels,
+                    datasets: [
+                        {
+                            label: 'Ingresos',
+                            data: datosIngresosProg.data || [],
+                            backgroundColor: colorSuccess + '25',
+                            borderColor: colorSuccess,
+                            borderWidth: 2,
+                            borderRadius: 6,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.5
+                        },
+                        {
+                            label: 'Gastos',
+                            data: datosGastosProg.data || [],
+                            backgroundColor: colorDanger + '25',
+                            borderColor: colorDanger,
+                            borderWidth: 2,
+                            borderRadius: 6,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.5
+                        },
+                        {
+                            label: 'Margen Neto (Ahorro)',
+                            data: datosHistoricos.data || [],
+                            type: 'line',
+                            borderColor: colorPrimary,
+                            borderWidth: 3,
+                            pointBackgroundColor: colorPrimary,
+                            pointHoverRadius: 6,
+                            tension: 0.25,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1400,
+                        easing: 'easeOutQuart'
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { color: textMuted, font: { weight: '700', size: 12 } }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: textMuted, font: { weight: '600' } } },
+                        y: {
+                            grid: { color: borderColor },
+                            ticks: {
+                                color: textMuted,
+                                font: { weight: '600' },
+                                callback: function(v) { return v.toLocaleString('es-ES') + ' €'; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // =================================================================
+        // GRAPH 2: RADIOGRAFÍA DE GASTOS (DONUT DE CATEGORÍAS)
+        // =================================================================
+        const ctxDonut = document.getElementById('chartDonutCategorias');
+        if (ctxDonut && datosCategorias.labels && datosCategorias.labels.length > 0) {
+            new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: datosCategorias.labels,
+                    datasets: [{
+                        data: datosCategorias.data,
+                        backgroundColor: paletteDonut.slice(0, datosCategorias.labels.length),
+                        borderWidth: 2,
+                        borderColor: style.getPropertyValue('--bg-sidebar').trim() || '#141416',
+                        hoverOffset: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '72%',
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true,
+                        duration: 1200,
+                        easing: 'easeOutBack'
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                color: textMuted,
+                                padding: 15,
+                                font: { weight: '600', size: 11 },
+                                boxWidth: 12,
+                                borderRadius: 4
+                            }
+                        }
+                    }
+                }
+            });
+
+            // =================================================================
+            // COMPONENTE C: RANKING DE IMPACTO REAL POR CATEGORÍA
+            // =================================================================
+            const rankingContainer = document.getElementById('jsCategoryRanking');
+            if (rankingContainer) {
+                rankingContainer.innerHTML = '';
+
+                const sumaTotalGastos = datosCategorias.data.reduce((a, b) => a + b, 0);
+
+                const rankingMapeado = datosCategorias.labels.map((label, index) => {
+                    const importe = datosCategorias.data[index];
+                    const porcentaje = sumaTotalGastos > 0 ? (importe / sumaTotalGastos * 100) : 0;
+                    return { label, importe, porcentaje, color: paletteDonut[index % paletteDonut.length] };
+                }).sort((a, b) => b.importe - a.importe);
+
+                rankingMapeado.forEach(item => {
+                    const itemHtml = `
+                        <div class="category-rank-item">
+                            <div class="category-rank-info">
+                                <span style="color: var(--text-main); font-weight:700;">${item.label}</span>
+                                <span style="color: var(--text-secondary); font-weight:700;">${item.importe.toLocaleString('es-ES', {minimumFractionDigits: 2})} € <span style="color: var(--text-muted); font-size:0.8rem; margin-left:0.25rem;">(		${item.porcentaje.toFixed(1)}%)</span></span>
+                            </div>
+                            <div class="category-progress-bg">
+                                <div class="category-progress-fill" style="width: 0%; background: ${item.color};" data-width="${item.porcentaje}%"></div>
+                            </div>
+                        </div>
+                    `;
+                    rankingContainer.insertAdjacentHTML('beforeend', itemHtml);
+                });
+
+                setTimeout(() => {
+                    rankingContainer.querySelectorAll('.category-progress-fill').forEach(fill => {
+                        fill.style.width = fill.getAttribute('data-width');
+                    });
+                }, 300);
+            }
+        }
+    });
+</script>
+{% endblock %}

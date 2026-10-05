@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración - FinDash{% endblock %}
+
+{% block extra_head %}
+<style>
+    .settings-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); overflow-x: auto; padding-bottom: 1px; scrollbar-width: none; }
+    .settings-tabs::-webkit-scrollbar { display: none; }
+    .settings-tab { padding: 0.85rem 1.25rem; border: none; background: transparent; font-size: 0.95rem; font-weight: 700; color: var(--text-muted); cursor: pointer; white-space: nowrap; position: relative; display: flex; align-items: center; gap: 0.5rem; transition: var(--transition); }
+    .settings-tab:hover { color: var(--text-main); }
+    .settings-tab.active { color: var(--primary); }
+    .settings-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
+    .settings-panel { display: none; }
+    .settings-panel.active { display: block; }
+
+    .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .theme-box { border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-main); padding: 1.5rem 1rem; text-align: center; cursor: pointer; color: var(--text-secondary); font-weight: 700; transition: var(--transition); }
+    .theme-box:hover { border-color: var(--text-muted); }
+    .theme-box.active { border-color: var(--primary); color: var(--primary); background: rgba(0,229,153,0.05); box-shadow: 0 0 0 1px var(--primary); }
+    .theme-box .icon { font-size: 2rem; margin-bottom: 0.75rem; }
+
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 0; border-bottom: 1px solid var(--border-color); }
+    .toggle-row:last-child { border-bottom: none; }
+    .switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); border-radius: 30px; transition: .3s; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: var(--text-muted); border-radius: 50%; transition: .3s; }
+    input:checked + .slider { background-color: rgba(0,229,153,0.2); border: 1px solid var(--primary); }
+    input:checked + .slider:before { transform: translateX(22px); background-color: var(--primary); }
+
+    .btn-danger { background: rgba(255,68,68,0.1); color: var(--danger); border: 1px solid rgba(255,68,68,0.3); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+    .presu-row { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--bg-main); border-radius: 10px; border: 1px solid var(--border-color); }
+</style>
+{% endblock %}
+
+{% block content %}
+<header style="margin-bottom:2rem;">
+    <h1 style="font-size:2rem;font-weight:800;letter-spacing:-1px;">Configuración</h1>
+    <p style="color:var(--text-secondary);font-size:0.95rem;">Adapta el sistema a tus necesidades operativas.</p>
+</header>
+
+<div class="settings-tabs">
+    <button class="settings-tab active" data-tab="perfil"><i class="ph ph-user"></i> Perfil</button>
+    <button class="settings-tab" data-tab="presupuestos"><i class="ph ph-wallet"></i> Presupuestos</button>
+    <button class="settings-tab" data-tab="metas"><i class="ph ph-target"></i> Metas</button>
+    <button class="settings-tab" data-tab="preferencias"><i class="ph ph-palette"></i> Preferencias</button>
+    <button class="settings-tab" data-tab="datos"><i class="ph ph-shield-check"></i> Datos</button>
+</div>
+
+<div class="settings-panel active" id="panel-perfil">
+    <div class="bento-grid" style="margin-top:0;">
+        <div class="bento-card span-8">
+            <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem;">
+                <i class="ph ph-identification-card" style="color:var(--success);"></i> Identidad del Usuario
+            </h3>
+            <form method="POST" action="{{ url_for('settings') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="accion" value="guardar_perfil">
+                <div class="form-group">
+                    <label>Nombre Visible</label>
+                    <input type="text" name="nombrevisible" class="form-input" value="{{ nombre }}" required minlength="2" maxlength="50">
+                </div>
+                <div class="form-group" style="opacity:0.6;pointer-events:none;">
+                    <label>Correo Electrónico</label>
+                    <input type="email" class="form-input" value="{{ email_real }}" disabled>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top:1rem;">
+                    <i class="ph ph-floppy-disk"></i> Actualizar Perfil
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="settings-panel" id="panel-presupuestos">
+    <div class="bento-grid" style="margin-top:0;">
+        <div class="bento-card span-8">
+            <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;">
+                <i class="ph ph-warning-circle" style="color:var(--warning);"></i> Límites de Gasto Mensual
+            </h3>
+            <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem;">Deja el campo vacío para no aplicar límite en esa categoría.</p>
+            <form method="POST" action="{{ url_for('settings') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="accion" value="guardar_presupuestos">
+
+                {% set categorias_iconos = {
+                    'Alimentación': 'ph-hamburger',
+                    'Transporte': 'ph-car',
+                    'Ocio': 'ph-game-controller',
+                    'Hogar': 'ph-house',
+                    'Salud': 'ph-first-aid',
+                    'Educación': 'ph-books',
+                    'Servicios': 'ph-lightbulb',
+                    'Otros': 'ph-package'
+                } %}
+
+                {% set todas_categorias = ['Alimentación','Transporte','Ocio','Hogar','Salud','Educación','Servicios','Otros'] %}
+
+                {% for cat in categorias_usadas %}
+                    {% if cat not in todas_categorias %}
+                        {% set todas_categorias = todas_categorias + [cat] %}
+                    {% endif %}
+                {% endfor %}
+
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+                {% for cat in todas_categorias %}
+                    {% set presupuesto_cat = namespace(valor=0) %}
+                    {% for fila in presupuestos %}
+                        {% if fila['categoria'] == cat %}
+                            {% set presupuesto_cat.valor = fila['importe_mensual'] %}
+                        {% endif %}
+                    {% endfor %}
+                    <div class="presu-row">
+                        <span style="font-weight:700;display:flex;align-items:center;gap:0.75rem;">
+                            <i class="ph {{ categorias_iconos.get(cat, 'ph-tag') }}" style="color:var(--primary);font-size:1.2rem;"></i>
+                            {{ cat }}
+                        </span>
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                            <input type="number" step="0.01" min="0" name="presu_{{ cat }}"
+                                   value="{{ '%.2f'|format(presupuesto_cat.valor) if presupuesto_cat.valor else '' }}"
+                                   class="form-input"
+                                   style="width:120px !important;text-align:right;padding:0.5rem !important;"
+                                   placeholder="Sin límite">
+                            <span style="font-weight:800;color:var(--text-muted);">€</span>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top:1.5rem;width:100%;justify-content:center;">
+                    <i class="ph ph-check-circle"></i> Guardar Límites
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="settings-panel" id="panel-metas">
+    <div class="bento-grid" style="margin-top:0;">
+        <div class="bento-card span-6">
+            <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem;">
+                <i class="ph ph-flag-checkered" style="color:var(--success);"></i> Tus Objetivos
+            </h3>
+            {% if metas %}
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+                {% for meta in metas %}
+                    <div class="bento-card" style="padding:1.25rem; background:var(--bg-main); display:flex; flex-direction:row; justify-content:space-between; align-items:center; margin:0;">
+                        <div>
+                            <div style="font-weight:800;font-size:1.05rem;">{{ meta['nombre'] }}</div>
+                            <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.2rem;">
+                                Objetivo: <strong style="color:var(--text-main);">{{ meta['cantidad_objetivo'] | format_currency }}</strong>
+                            </div>
+                        </div>
+                        <form method="POST" action="{{ url_for('settings') }}" style="margin:0;" onsubmit="return confirm('¿Eliminar esta meta?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="accion" value="borrar_meta">
+                            <input type="hidden" name="meta_id" value="{{ meta['id'] }}">
+                            <button type="submit" class="btn-primary btn-danger" style="padding:0.6rem;">
+                                <i class="ph ph-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                {% endfor %}
+                </div>
+            {% else %}
+                <div style="padding:3rem 1rem;text-align:center;border:1px dashed var(--border-color);border-radius:10px; width:100%;">
+                    <i class="ph ph-target" style="font-size:2rem;color:var(--text-muted);opacity:0.5;"></i>
+                    <p style="color:var(--text-secondary);font-size:0.9rem;margin-top:0.5rem;">No hay metas activas.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="bento-card span-6">
+            <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:1.5rem;">Nuevo Objetivo</h3>
+            <form method="POST" action="{{ url_for('settings') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="accion" value="nueva_meta">
+                <div class="form-group">
+                    <label>Nombre del Objetivo</label>
+                    <input type="text" name="meta_nombre" class="form-input" placeholder="Ej: Fondo de emergencia" required maxlength="60">
+                </div>
+                <div class="form-group">
+                    <label>Cantidad Objetivo (€)</label>
+                    <input type="number" step="0.01" min="1" name="meta_objetivo" class="form-input" placeholder="5000.00" required>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top:1rem;width:100%;justify-content:center;">
+                    <i class="ph ph-plus"></i> Registrar Meta
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="settings-panel" id="panel-preferencias">
+    <div class="bento-grid" style="margin-top:0;">
+        <div class="bento-card span-6">
+            <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:1.5rem;">
+                <i class="ph ph-paint-brush" style="color:var(--success);"></i> Interfaz Visual
+            </h3>
+            <div class="theme-grid">
+                <div class="theme-box" onclick="uiSetTheme('light')" id="theme-light">
+                    <div class="icon"><i class="ph ph-sun"></i></div> Claro
+                </div>
+                <div class="theme-box" onclick="uiSetTheme('dark')" id="theme-dark">
+                    <div class="icon"><i class="ph ph-moon"></i></div> Oscuro
+                </div>
+                <div class="theme-box" onclick="uiSetTheme('system')" id="theme-system">
+                    <div class="icon"><i class="ph ph-desktop"></i></div> Auto
+                </div>
+            </div>
+        </div>
+
+        <div class="bento-card span-6">
+            <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:1.5rem;">
+                <i class="ph ph-sliders-horizontal" style="color:var(--info);"></i> Comportamiento
+            </h3>
+            <div class="toggle-row">
+                <div>
+                    <strong style="font-size:0.95rem;">Modo Privacidad</strong>
+                    <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.2rem;">Oculta importes en el panel principal.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-privacy" {% if session.get('privacidad') == 1 %}checked{% endif %} onchange="guardarPreferenciasCloud()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <div>
+                    <strong style="font-size:0.95rem;">Reducir Animaciones</strong>
+                    <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.2rem;">Desactiva transiciones y efectos visuales.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-animations" {% if session.get('animaciones') == 1 %}checked{% endif %} onchange="guardarPreferenciasCloud()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="settings-panel" id="panel-datos">
+    <div class="bento-grid" style="margin-top:0;">
+        <div class="bento-card span-6">
+            <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:0.5rem;">
+                <i class="ph ph-export" style="color:var(--success);"></i> Exportación de Datos
+            </h3>
+            <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.5rem;">
+                Descarga todos tus registros en formato CSV compatible con Microsoft Excel.
+            </p>
+            <a href="{{ url_for('exportar_csv') }}" class="btn-primary" style="width:100%;justify-content:center;background:transparent;border:1px solid var(--border-color);color:var(--text-main);">
+                <i class="ph ph-file-csv" style="color:var(--success);"></i> Generar Reporte Excel (CSV)
+            </a>
+        </div>
+
+        <div class="bento-card span-6">
+            <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:0.5rem;">
+                <i class="ph ph-archive" style="color:var(--primary);"></i> Histórico Financiero
+            </h3>
+            <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.5rem;">
+                Consulta el cierre mensual consolidado de todos tus periodos registrados.
+            </p>
+            <a href="{{ url_for('historico') }}" class="btn-primary" style="width:100%;justify-content:center;background:transparent;border:1px solid var(--border-color);color:var(--text-main);">
+                <i class="ph ph-calendar-check" style="color:var(--primary);"></i> Ver Histórico Mensual
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTab = localStorage.getItem('findash_active_tab') || 'perfil';
+        activateTab(savedTab);
+
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                activateTab(this.dataset.tab);
+            });
+        });
+
+        const currentTheme = localStorage.getItem('findash_theme') || 'dark';
+        const themeKey = ['light', 'dark', 'system'].includes(currentTheme) ? currentTheme : 'dark';
+        const initialBox = document.getElementById('theme-' + themeKey);
+        if (initialBox) initialBox.classList.add('active');
+    });
+
+    function activateTab(tabId) {
+        document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+        
+        const targetTab = document.querySelector(`.settings-tab[data-tab="${tabId}"]`);
+        const targetPanel = document.getElementById('panel-' + tabId);
+        
+        if (targetTab && targetPanel) {
+            targetTab.classList.add('active');
+            targetPanel.classList.add('active');
+            localStorage.setItem('findash_active_tab', tabId);
+            
+            // Re-ejecutar la animación de entrada para las tarjetas del panel activo
+            if (typeof animateAllCards === 'function') {
+                animateAllCards();
+            }
+        }
+    }
+</script>
+{% endblock %}

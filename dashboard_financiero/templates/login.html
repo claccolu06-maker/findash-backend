@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión - FinDash{% endblock %}
+
+{% block extra_head %}
+<style>
+    .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; background: var(--bg-main); }
+    .auth-card { display: flex; width: 100%; max-width: 1000px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.3); }
+    .auth-banner { flex: 1; padding: 4rem 3rem; background: linear-gradient(145deg, rgba(0,229,153,0.05) 0%, rgba(20,20,22,0.8) 100%); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; position: relative; overflow: hidden; }
+    .auth-banner-logo { font-size: 1.5rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 3rem; text-decoration: none; }
+    .auth-title { font-size: 2.2rem; font-weight: 800; line-height: 1.1; margin-bottom: 1rem; letter-spacing: -1px; }
+    .auth-subtitle { color: var(--text-secondary); font-size: 1.05rem; line-height: 1.5; margin-bottom: 2.5rem; }
+    .auth-features { display: flex; flex-direction: column; gap: 1.25rem; position: relative; z-index: 2; }
+    .feature-item { display: flex; align-items: center; gap: 1rem; font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
+    .feature-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(0,229,153,0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: 1px solid rgba(0,229,153,0.2); flex-shrink: 0; }
+    .auth-bg-icon { position: absolute; bottom: -30px; right: -30px; font-size: 14rem; color: var(--primary); opacity: 0.03; transform: rotate(-15deg); pointer-events: none; z-index: 1; }
+    .auth-form-box { flex: 1.1; padding: 4rem 3.5rem; display: flex; flex-direction: column; justify-content: center; background: var(--bg-main); }
+    .input-icon-wrapper { position: relative; display: flex; align-items: center; }
+    .input-icon-wrapper i.icon-left { position: absolute; left: 1.2rem; color: var(--text-muted); font-size: 1.2rem; pointer-events: none; }
+    .input-icon-wrapper .form-input { padding-left: 3rem !important; padding-top: 1rem !important; padding-bottom: 1rem !important; }
+    .auth-footer { margin-top: 2rem; text-align: center; font-size: 0.9rem; color: var(--text-secondary); }
+    .auth-footer a { color: var(--primary); font-weight: 700; text-decoration: none; transition: var(--transition); }
+    .auth-footer a:hover { text-decoration: underline; }
+    
+    /* ESTILOS PARA EL BOTÓN DE GOOGLE */
+    .btn-google { display: flex; align-items: center; justify-content: center; width: 100%; padding: 1rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; font-weight: 600; color: var(--text-main); cursor: pointer; transition: all 0.3s; margin-bottom: 0.5rem; }
+    .btn-google:hover { background: rgba(255,255,255,0.05); border-color: var(--primary); }
+    .btn-google img { width: 20px; margin-right: 10px; }
+    .divider { display: flex; align-items: center; text-align: center; margin: 1.5rem 0; color: var(--text-muted); }
+    .divider hr { flex: 1; border: none; border-top: 1px solid var(--border-color); }
+    .divider span { padding: 0 10px; font-size: 0.85rem; }
+
+    @media (max-width: 850px) {
+        .auth-card { flex-direction: column; }
+        .auth-banner { padding: 3rem 2rem; border-right: none; border-bottom: 1px solid var(--border-color); }
+        .auth-form-box { padding: 3rem 2rem; }
+        .auth-bg-icon { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- SISTEMA DE NOTIFICACIONES (FLASH MESSAGES) -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
+      {% for category, message in messages %}
+        <div style="background: var(--bg-card); border-left: 4px solid {% if category == 'danger' %}#ff4444{% else %}var(--primary){% endif %}; padding: 16px 24px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: var(--text-main); font-weight: 600; display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out;">
+          <i class="ph-fill {% if category == 'danger' %}ph-warning-circle{% else %}ph-check-circle{% endif %}" style="font-size: 1.5rem; color: {% if category == 'danger' %}#ff4444{% else %}var(--primary){% endif %};"></i>
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+    <style>
+      @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+  {% endif %}
+{% endwith %}
+
+<div class="auth-container">
+    <div class="auth-card">
+
+        <!-- BANNER IZQUIERDO -->
+        <div class="auth-banner">
+            <a href="{{ url_for('index') }}" class="auth-banner-logo">
+                <i class="ph-fill ph-wallet" style="color:var(--primary);"></i> FinDash
+            </a>
+            <h1 class="auth-title">Accede a tu panel financiero</h1>
+            <p class="auth-subtitle">Controla ingresos, gastos y ahorro desde un único lugar, con una vista clara y rápida de tu dinero.</p>
+            <div class="auth-features">
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="ph ph-list-checks"></i></div>
+                    Tus movimientos en orden.
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="ph ph-chart-line-up"></i></div>
+                    Tus gráficos listos.
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="ph ph-trend-up"></i></div>
+                    Tu evolución financiera, clara.
+                </div>
+            </div>
+            <i class="ph-fill ph-shield-check auth-bg-icon"></i>
+        </div>
+
+        <!-- FORMULARIO DERECHO -->
+        <div class="auth-form-box">
+            <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:0.5rem;letter-spacing:-0.5px;">Iniciar Sesión</h2>
+            <p style="color:var(--text-secondary);font-size:0.95rem;margin-bottom:2.5rem;">Introduce tus credenciales para acceder a tu entorno seguro.</p>
+
+            <!-- NUEVO BOTÓN DE GOOGLE -->
+            <button type="button" id="googleLoginBtn" class="btn-google">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Logo de Google">
+                Continuar con Google
+            </button>
+
+            <div class="divider">
+                <hr><span>o inicia sesión con tu email</span><hr>
+            </div>
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label for="email">Correo Electrónico</label>
+                    <div class="input-icon-wrapper">
+                        <i class="ph ph-envelope-simple icon-left"></i>
+                        <input type="email" id="email" name="email" class="form-input"
+                               placeholder="tu@email.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:2.5rem;">
+                    <label for="password">Contraseña</label>
+                    <div class="input-icon-wrapper">
+                        <i class="ph ph-lock-key icon-left"></i>
+                        <input type="password" id="password" name="password" class="form-input"
+                               placeholder="••••••••" required autocomplete="current-password" style="padding-right: 3rem;">
+                        <button type="button" onclick="togglePassword('password', this)" style="position: absolute; right: 1rem; background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; padding: 0; display: flex; align-items: center;">
+                            <i class="ph ph-eye"></i>
+                        </button>
+                    </div>
+                    <div style="text-align:right;margin-top:0.5rem;">
+                        <span style="font-size:0.8rem;color:var(--text-muted); cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">
+                            ¿Olvidaste tu contraseña? Contacta con soporte.
+                        </span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width:100%;justify-content:center;padding:1.1rem;font-size:1rem;">
+                    Acceder al Panel <i class="ph ph-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                ¿Aún no tienes cuenta? <a href="{{ url_for('registro') }}">Regístrate gratis</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Scripts de Interacción Básica -->
+<script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('ph-eye');
+            icon.classList.add('ph-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('ph-eye-slash');
+            icon.classList.add('ph-eye');
+        }
+    }
+</script>
+
+<!-- SCRIPT DE FIREBASE CON TUS CLAVES Y EL TOKEN CSRF -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+    // Tu configuración exacta
+    const firebaseConfig = {
+      apiKey: "AIzaSyDRpiDjq-7kXvSndoZqT_51II7-3ajS2YQ",
+      authDomain: "findash-abc58.firebaseapp.com",
+      projectId: "findash-abc58",
+      storageBucket: "findash-abc58.firebasestorage.app",
+      messagingSenderId: "566983233923",
+      appId: "1:566983233923:web:7d9c5e5eec8240faaa26b6",
+      measurementId: "G-W2TQQS1TQT"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    document.getElementById('googleLoginBtn').addEventListener('click', () => {
+        signInWithPopup(auth, provider)
+            .then((result) => {
+                // SOLUCIÓN: Obtenemos el token puro de Google, no el de Firebase
+                const credential = GoogleAuthProvider.credentialFromResult(result);
+                const googleIdToken = credential.idToken;
+                
+                if (!googleIdToken) {
+                    throw new Error("No se pudo obtener el token puro de Google.");
+                }
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ url_for('login_google') }}";
+
+                // Enviamos el token correcto de Google
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'id_token';
+                input.value = googleIdToken;
+                form.appendChild(input);
+
+                // Enviamos el token de seguridad que pide Flask
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = 'csrf_token';
+                csrf.value = "{{ csrf_token() }}";
+                form.appendChild(csrf);
+
+                document.body.appendChild(form);
+                form.submit();
+            })
+            .catch((error) => {
+                console.error("Fallo al iniciar sesión:", error);
+                alert("Error en el login con Google. Revisa la consola.");
+            });
+    });
+</script>
+{% endblock %}

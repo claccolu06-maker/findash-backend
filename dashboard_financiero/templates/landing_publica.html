@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}FinDash - Toma el control de tus finanzas{% endblock %}
+
+{% block extra_head %}
+<meta name="description" content="FinDash — Herramienta gratuita para controlar ingresos, gastos y ahorro desde un único panel claro y rápido.">
+<style>
+    /* CORRECCIÓN: Se han limpiado todos los espacios invisibles corruptos que bloqueaban el CSS */
+    html { scroll-behavior: smooth; }
+
+    .landing-nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2rem; max-width: 1200px; margin: 0 auto; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-weight: 600; margin-left: 1.5rem; transition: var(--transition); }
+    .nav-links a:hover { color: var(--text-main); }
+
+    .landing-hero { text-align: center; max-width: 800px; margin: 4rem auto 3rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding: 0 1rem; }
+    .landing-title { font-size: 3.5rem; font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; }
+    .landing-title span { color: var(--primary); }
+    .landing-subtitle { font-size: 1.15rem; color: var(--text-secondary); max-width: 600px; line-height: 1.6; }
+
+    .cta-group { display: flex; gap: 1rem; margin-top: 1rem; }
+    .btn-cta { padding: 0.85rem 2rem; border-radius: 10px; font-weight: 700; font-size: 1rem; text-decoration: none; transition: var(--transition); }
+    .btn-cta-primary { background: var(--primary); color: #000; }
+    
+    /* CORRECCIÓN: Uso de brightness para evitar botones invisibles al hacer hover */
+    .btn-cta-primary:hover { filter: brightness(0.9); transform: translateY(-2px); }
+    
+    .btn-cta-secondary { background: transparent; color: var(--text-main); border: 1px solid var(--border-color); }
+    .btn-cta-secondary:hover { background: rgba(255,255,255,0.05); }
+
+    .mockup-section { width: 100%; max-width: 950px; margin: 2rem auto 5rem; padding: 0 1rem; }
+    .mockup-window { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.4); }
+    .window-bar { background: rgba(255,255,255,0.02); padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); display: flex; gap: 0.5rem; align-items: center; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .mockup-body { padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; background: var(--bg-main); }
+    .mockup-grid-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .m-kpi { background: var(--bg-card); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px; }
+    .m-graph-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; height: 160px; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; overflow: hidden; }
+    .m-bar { width: 100%; background: rgba(0,229,153,0.1); border-top: 2px solid var(--primary); border-radius: 4px 4px 0 0; animation: mockupBar 3s infinite alternate ease-in-out; transform-origin: bottom; }
+    .m-bar.danger { background: rgba(255,68,68,0.1); border-top-color: var(--danger); }
+    
+    .m-bar:nth-child(1) { animation-delay: 0s; }
+    .m-bar:nth-child(2) { animation-delay: -0.4s; }
+    .m-bar:nth-child(3) { animation-delay: -0.8s; }
+    .m-bar:nth-child(4) { animation-delay: -1.2s; }
+    .m-bar:nth-child(5) { animation-delay: -1.6s; }
+    .m-bar:nth-child(6) { animation-delay: -2s; }
+    .m-bar:nth-child(7) { animation-delay: -2.4s; }
+    @keyframes mockupBar { 0% { transform: scaleY(0.9); } 100% { transform: scaleY(1.05); } }
+
+    .features-section { max-width: 1100px; margin: 0 auto 5rem; padding: 0 1rem; }
+    .features-title { font-size: 2rem; font-weight: 800; text-align: center; margin-bottom: 2.5rem; }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .feature-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.75rem; transition: var(--transition); }
+    .feature-card:hover { border-color: rgba(0,229,153,0.3); transform: translateY(-2px); }
+    .feature-card-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(0,229,153,0.1); border: 1px solid rgba(0,229,153,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--primary); margin-bottom: 1rem; }
+    .feature-card h3 { font-size: 1rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .feature-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; }
+
+    .faq-section { max-width: 700px; margin: 0 auto 6rem; padding: 0 1rem; }
+    .faq-title { font-size: 2rem; font-weight: 800; text-align: center; margin-bottom: 2.5rem; }
+    .faq-item { border-bottom: 1px solid var(--border-color); padding: 1.5rem 0; cursor: pointer; }
+    .faq-question { font-weight: 700; font-size: 1.05rem; display: flex; justify-content: space-between; align-items: center; }
+    .faq-answer { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; display: none; }
+    .faq-item.open .faq-answer { display: block; }
+
+    .landing-footer { border-top: 1px solid var(--border-color); padding: 3rem 1rem; margin-top: 4rem; text-align: center; }
+    .footer-links { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .footer-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.5rem; }
+    .footer-links a:hover { color: var(--primary); }
+    .footer-copyright { color: var(--text-muted); font-size: 0.85rem; }
+
+    @media (max-width: 768px) {
+        .features-grid { grid-template-columns: 1fr; }
+        .mockup-grid-kpis { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+        .landing-title { font-size: 2.5rem; }
+        .cta-group { flex-direction: column; width: 100%; }
+        .btn-cta { text-align: center; }
+        .nav-links { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav class="landing-nav">
+    <div style="font-size:1.5rem;font-weight:800;color:var(--text-main);display:flex;align-items:center;gap:0.5rem;">
+        <i class="ph-fill ph-wallet" style="color:var(--primary);"></i> FinDash
+    </div>
+    <div class="nav-links">
+        <a href="#simulador">Simulador</a>
+        <a href="#funcionalidades">Funcionalidades</a>
+        <a href="#faq">FAQ</a>
+        <a href="{{ url_for('login') }}">Iniciar Sesión</a>
+    </div>
+</nav>
+
+<section class="landing-hero">
+    <h1 class="landing-title">Toma el control absoluto de tus <span>flujos de caja</span></h1>
+    <p class="landing-subtitle">Una herramienta limpia, ágil y local para registrar transacciones, analizar gastos y consolidar tus metas sin complicaciones.</p>
+    <div class="cta-group">
+        <a href="{{ url_for('registro') }}" class="btn-cta btn-cta-primary">Empezar gratis</a>
+        <a href="#simulador" class="btn-cta btn-cta-secondary">Ver simulador</a>
+    </div>
+</section>
+
+<section class="mockup-section" id="simulador">
+    <div class="mockup-window">
+        <div class="window-bar">
+            <div class="dot" style="background:#ff5f56;"></div>
+            <div class="dot" style="background:#ffbd2e;"></div>
+            <div class="dot" style="background:#27c93f;"></div>
+        </div>
+        <div class="mockup-body">
+            <div class="mockup-grid-kpis">
+                <div class="m-kpi">
+                    <div style="font-size:0.7rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Patrimonio Neto</div>
+                    <div style="font-size:1.5rem;font-weight:800;color:var(--text-main);margin-top:0.3rem;">12.450,00 €</div>
+                </div>
+                <div class="m-kpi">
+                    <div style="font-size:0.7rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Gastos del Mes</div>
+                    <div style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-top:0.3rem;">1.250,15 €</div>
+                </div>
+                <div class="m-kpi">
+                    <div style="font-size:0.7rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Tasa de Ahorro</div>
+                    <div style="font-size:1.5rem;font-weight:800;color:var(--success);margin-top:0.3rem;">48,2%</div>
+                </div>
+            </div>
+            <div class="m-graph-box">
+                <div class="m-bar" style="height:30%;"></div>
+                <div class="m-bar danger" style="height:45%;"></div>
+                <div class="m-bar" style="height:60%;"></div>
+                <div class="m-bar" style="height:85%;"></div>
+                <div class="m-bar danger" style="height:50%;"></div>
+                <div class="m-bar" style="height:95%;"></div>
+                <div class="m-bar" style="height:70%;"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="features-section" id="funcionalidades">
+    <h2 class="features-title">Todo lo que necesitas</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-card-icon"><i class="ph ph-list-checks"></i></div>
+            <h3>Registro de Movimientos</h3>
+            <p>Anota ingresos y gastos en segundos con categorías, fecha y concepto. Tu libro mayor siempre al día.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-card-icon"><i class="ph ph-chart-line-up"></i></div>
+            <h3>Analytics Avanzado</h3>
+            <p>Gráficos interactivos de evolución patrimonial, flujo de ingresos y gastos por periodos personalizados.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-card-icon"><i class="ph ph-target"></i></div>
+            <h3>Metas de Ahorro</h3>
+            <p>Define objetivos financieros y visualiza tu progreso en tiempo real con una barra de avance clara.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-card-icon"><i class="ph ph-wallet"></i></div>
+            <h3>Control de Presupuestos</h3>
+            <p>Establece límites de gasto por categoría y recibe alertas automáticas cuando te acercas al límite.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-card-icon"><i class="ph ph-file-csv"></i></div>
+            <h3>Exportación CSV</h3>
+            <p>Descarga todos tus movimientos en formato compatible con Excel para auditorías externas.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-card-icon"><i class="ph ph-device-mobile"></i></div>
+            <h3>App Instalable (PWA)</h3>
+            <p>Instala FinDash en tu móvil como una app nativa. Funciona sin conexión gracias al service worker.</p>
+        </div>
+    </div>
+</section>
+
+<section class="faq-section" id="faq">
+    <h2 class="faq-title">Preguntas frecuentes</h2>
+    <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">¿Mis datos financieros están seguros? <i class="ph ph-caret-down"></i></div>
+        <div class="faq-answer">Completamente. Tus datos se guardan de forma local en tu base de datos SQLite privada en el servidor. No compartimos ni vendemos ningún tipo de información personal o financiera.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">¿Puedo exportar mis transacciones a Excel? <i class="ph ph-caret-down"></i></div>
+        <div class="faq-answer">Sí. Desde el panel de Configuración, en la pestaña Datos, tienes un exportador optimizado para Microsoft Excel en formato CSV con separador de punto y coma.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">¿Es gratuito? <i class="ph ph-caret-down"></i></div>
+        <div class="faq-answer">Sí, FinDash es completamente gratuito. Solo necesitas crear una cuenta para empezar a registrar tus movimientos.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">¿Funciona en el móvil? <i class="ph ph-caret-down"></i></div>
+        <div class="faq-answer">Sí. FinDash está diseñado con una interfaz totalmente responsive y puede instalarse como app nativa en tu móvil (PWA) desde el navegador, tanto en iOS como en Android.</div>
+    </div>
+</section>
+
+<footer class="landing-footer">
+    <div class="footer-links">
+        <a href="#"><i class="ph ph-shield-check"></i> Privacidad</a>
+        <a href="#"><i class="ph ph-file-text"></i> Términos</a>
+        <a href="{{ url_for('registro') }}"><i class="ph ph-user-plus"></i> Crear cuenta</a>
+        <a href="{{ url_for('login') }}"><i class="ph ph-sign-in"></i> Iniciar sesión</a>
+    </div>
+    <div class="footer-copyright">&copy; 2026 FinDash. Todos los derechos reservados.</div>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleFaq(element) {
+        const isOpen = element.classList.contains('open');
+        document.querySelectorAll('.faq-item').forEach(item => {
+            item.classList.remove('open');
+            const icon = item.querySelector('.faq-question i');
+            if (icon) icon.className = 'ph ph-caret-down';
+        });
+        if (!isOpen) {
+            element.classList.add('open');
+            const icon = element.querySelector('.faq-question i');
+            if (icon) icon.className = 'ph ph-caret-up';
+        }
+    }
+</script>
+{% endblock %}

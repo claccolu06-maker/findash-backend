@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico Financiero - FinDash{% endblock %}
+
+{% block extra_head %}
+<style>
+    .hist-card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border-color); padding: 1.5rem; margin-bottom: 1.5rem; }
+    .hist-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .data-table th { padding: 0.8rem 1rem; text-align: left; background: rgba(255,255,255,0.02); color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); }
+    .data-table td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); font-weight: 500; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover { background: rgba(255,255,255,0.01); }
+    .pos { color: var(--success); font-weight: 700; }
+    .neg { color: var(--danger); font-weight: 700; }
+
+    .empty-hist { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+    .empty-hist i { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.75rem; display: block; }
+
+    .btn-secondary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 10px; background: transparent; border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: var(--transition); }
+    .btn-secondary:hover { border-color: var(--text-muted); }
+
+    /* CORRECCIÓN: Clase para la cuadrícula del resumen que evita que se rompa en móviles */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    @media (max-width: 768px) { 
+        .summary-grid { grid-template-columns: 1fr; gap: 1rem; } 
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<header style="margin-bottom:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <div>
+        <h1 style="font-size:1.75rem;font-weight:800;color:var(--text-main);display:flex;align-items:center;gap:0.5rem;">
+            <i class="ph-fill ph-archive" style="color:var(--primary);"></i> Histórico Financiero
+        </h1>
+        <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.25rem;">Cierre de caja consolidado mensual</p>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="btn-secondary">
+        <i class="ph ph-arrow-left"></i> Volver al panel
+    </a>
+</header>
+
+<div class="hist-card">
+    <h2 class="hist-title">
+        <i class="ph ph-calendar-check" style="color:var(--primary);"></i> Auditoría Mensual
+    </h2>
+
+    {% if resumen_mensual %}
+    <div class="table-responsive" style="overflow-x:auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Mes Fiscal</th>
+                    <th>Ingresos</th>
+                    <th>Gastos Acumulados</th>
+                    <th>Margen Neto de Ahorro</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for fila in resumen_mensual %}
+                {% set ahorro_mes = fila['ingresos'] - fila['gastos'] %}
+                <tr>
+                    <td style="font-weight:700;color:var(--text-main);">{{ fila['mes'] }}</td>
+                    <td class="pos">+{{ fila['ingresos'] | format_currency }}</td>
+                    <td class="neg">-{{ fila['gastos'] | format_currency }}</td>
+                    <td class="{{ 'pos' if ahorro_mes >= 0 else 'neg' }}">
+                        {{ '+' if ahorro_mes >= 0 else '' }}{{ ahorro_mes | format_currency }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-hist">
+        <i class="ph ph-folder-open"></i>
+        <p style="font-weight:600;font-size:0.95rem;">No existen registros históricos todavía.</p>
+        <p style="font-size:0.85rem;margin-top:0.25rem;">Añade transacciones para ver el cierre mensual aquí.</p>
+        <a href="{{ url_for('anadir') }}" class="btn-primary" style="margin-top:1.5rem;display:inline-flex;">
+            <i class="ph ph-plus-circle"></i> Añadir primer movimiento
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% if resumen_mensual %}
+<div class="hist-card">
+    <h2 class="hist-title">
+        <i class="ph ph-chart-bar" style="color:var(--primary);"></i> Resumen Global
+    </h2>
+    {% set total_ingresos = resumen_mensual | sum(attribute='ingresos') %}
+    {% set total_gastos = resumen_mensual | sum(attribute='gastos') %}
+    {% set total_ahorro = total_ingresos - total_gastos %}
+    
+    <div class="summary-grid">
+        <div style="background:var(--bg-main);border:1px solid var(--border-color);border-radius:10px;padding:1.25rem;">
+            <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.5rem;">Total Ingresos</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--success);">+{{ total_ingresos | format_currency }}</div>
+        </div>
+        <div style="background:var(--bg-main);border:1px solid var(--border-color);border-radius:10px;padding:1.25rem;">
+            <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.5rem;">Total Gastos</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--danger);">-{{ total_gastos | format_currency }}</div>
+        </div>
+        <div style="background:var(--bg-main);border:1px solid var(--border-color);border-radius:10px;padding:1.25rem;">
+            <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.5rem;">Ahorro Neto Total</div>
+            <div style="font-size:1.5rem;font-weight:800;" class="{{ 'pos' if total_ahorro >= 0 else 'neg' }}">
+                {{ '+' if total_ahorro >= 0 else '' }}{{ total_ahorro | format_currency }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

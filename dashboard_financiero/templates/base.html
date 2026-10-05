@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="{{ session.get('tema', 'dark') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{% block title %}FinDash{% endblock %}</title>
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FinDash">
+    <meta name="theme-color" content="#0a0a0b">
+    <meta name="description" content="FinDash - Controla tus ingresos, gastos y ahorro desde un único panel claro y rápido.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        /* Parche de seguridad para la estructura (Evita que el diseño explote) */
+        .app-layout { display: flex; width: 100%; min-height: 100vh; overflow-x: hidden; }
+        .auth-layout main { margin-left: 0 !important; padding: 0 !important; width: 100%; }
+
+        /* Oculta la barra móvil en ordenador */
+        @media (min-width: 769px) {
+            .mobile-bottom-nav { display: none !important; }
+        }
+
+        /* Activa la barra móvil y esconde el sidebar en teléfonos */
+        @media (max-width: 768px) {
+            .app-layout { display: block; }
+            .sidebar { display: none !important; }
+            .mobile-bottom-nav {
+                display: flex !important; position: fixed; bottom: 0; left: 0; right: 0;
+                background: var(--bg-card, #141416); border-top: 1px solid var(--border-color, #27272a);
+                padding: 0.5rem; justify-content: space-around; align-items: center; z-index: 1000;
+            }
+            .mobile-bottom-nav a { text-decoration: none; color: var(--text-muted, #a1a1aa); display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+            .mobile-bottom-nav a.active { color: var(--primary, #00E599); }
+            .mobile-bottom-nav span { font-size: 0.65rem; white-space: nowrap; }
+            .main-content { padding-bottom: 5rem !important; } /* Deja margen para que la barra no tape el contenido final */
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% if session.get('usuario_id') %}app-layout{% else %}auth-layout{% endif %}">
+
+    <div id="toast-container" style="position:fixed;top:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:0.5rem;max-width:360px;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="toast {{ category }}" style="padding:1rem 1.5rem;border-radius:12px;font-weight:600;font-size:0.9rem;border:1px solid rgba(255,255,255,0.08);background:{% if category == 'success' %}#00c785{% elif category == 'danger' %}#FF4444{% elif category == 'warning' %}#f59e0b{% else %}#3b82f6{% endif %};color:{% if category == 'warning' %}#000{% else %}#fff{% endif %};box-shadow:0 10px 30px rgba(0,0,0,0.3);line-height:1.4;">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    {% if session.get('usuario_id') %}
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <i class="ph-fill ph-wallet"></i>
+            <span class="brand-text">FinDash</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <i class="ph ph-squares-four nav-icon"></i>
+                <span class="nav-text">Panel Principal</span>
+            </a>
+            <a href="{{ url_for('analytics') }}" class="nav-item {% if request.endpoint == 'analytics' %}active{% endif %}">
+                <i class="ph ph-chart-line-up nav-icon"></i>
+                <span class="nav-text">Analytics</span>
+            </a>
+            <a href="{{ url_for('anadir') }}" class="nav-item {% if request.endpoint == 'anadir' %}active{% endif %}">
+                <i class="ph ph-plus-circle nav-icon"></i>
+                <span class="nav-text">Nuevo Registro</span>
+            </a>
+            <a href="{{ url_for('transactions') }}" class="nav-item {% if request.endpoint == 'transactions' %}active{% endif %}">
+                <i class="ph ph-list-dashes nav-icon"></i>
+                <span class="nav-text">Historial</span>
+            </a>
+            <a href="{{ url_for('historico') }}" class="nav-item {% if request.endpoint == 'historico' %}active{% endif %}">
+                <i class="ph ph-archive nav-icon"></i>
+                <span class="nav-text">Histórico</span>
+            </a>
+            <a href="{{ url_for('settings') }}" class="nav-item {% if request.endpoint == 'settings' %}active{% endif %}">
+                <i class="ph ph-sliders-horizontal nav-icon"></i>
+                <span class="nav-text">Configuración</span>
+            </a>
+        </nav>
+
+        <button class="collapse-trigger" id="sidebarCollapseBtn" title="Contraer menú">
+            <i class="ph ph-caret-left" id="collapseIcon"></i>
+        </button>
+
+        <div class="user-card" style="margin-top:1.5rem;display:flex;align-items:center;gap:0.75rem;padding:1.25rem 0.25rem 0;border-top:1px solid var(--border-color);overflow:hidden;">
+            <div style="width:38px;height:38px;background:var(--primary);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:800;flex-shrink:0;font-size:1.1rem;">
+                {{ session.get('nombre', 'U')[:1]|upper }}
+            </div>
+            <div class="user-meta" style="flex:1;overflow:hidden;">
+                <div style="font-weight:700;font-size:0.9rem;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;color:var(--text-main);">
+                    {{ session.get('nombre', 'Usuario') }}
+                </div>
+                <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">Control Local</div>
+            </div>
+            <a href="{{ url_for('logout') }}" title="Cerrar sesión" style="color:var(--text-muted);font-size:1.2rem;flex-shrink:0;transition:color 0.2s;">
+                <i class="ph ph-sign-out"></i>
+            </a>
+        </div>
+    </aside>
+
+    <nav class="mobile-bottom-nav">
+        <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">
+            <i class="ph ph-squares-four"></i>
+            <span>Panel</span>
+        </a>
+        <a href="{{ url_for('transactions') }}" class="{% if request.endpoint == 'transactions' %}active{% endif %}">
+            <i class="ph ph-receipt"></i>
+            <span>Historial</span>
+        </a>
+        <a href="{{ url_for('anadir') }}" class="{% if request.endpoint == 'anadir' %}active{% endif %}">
+            <i class="ph-fill ph-plus-circle" style="font-size: 2.2rem; color: var(--primary);"></i>
+        </a>
+        <a href="{{ url_for('analytics') }}" class="{% if request.endpoint == 'analytics' %}active{% endif %}">
+            <i class="ph ph-chart-line-up"></i>
+            <span>Analytics</span>
+        </a>
+        <a href="{{ url_for('settings') }}" class="{% if request.endpoint == 'settings' %}active{% endif %}">
+            <i class="ph ph-gear"></i>
+            <span>Ajustes</span>
+        </a>
+    </nav>
+
+    {% endif %}
+
+    <main class="{% if session.get('usuario_id') %}main-content{% else %}auth-content-wrapper{% endif %}">
+        {% block content %}{% endblock %}
+    </main>
+
+   <script src="{{ url_for('static', filename='js/main.js') }}?v=2.0"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                    console.error('PWA Error:', err);
+                });
+            });
+        }
+    </script>
+
+    {% block scripts %}{% endblock %}
+
+</body>
+</html>

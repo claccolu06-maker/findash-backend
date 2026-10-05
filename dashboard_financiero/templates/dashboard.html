@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Control - FinDash{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Estilos específicos para optimizar la visualización de KPIs y alertas en el Dashboard */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .kpi-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .kpi-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    .kpi-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+    .alert-banner {
+        padding: 1rem 1.25rem;
+        border-radius: 10px;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    .alert-banner.danger {
+        background: rgba(255, 68, 68, 0.1);
+        border: 1px solid rgba(255, 68, 68, 0.2);
+        color: var(--danger);
+    }
+    .alert-banner.warning {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        color: var(--warning);
+    }
+    .period-selector {
+        display: flex;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        padding: 0.25rem;
+        border-radius: 10px;
+        gap: 0.25rem;
+    }
+    .period-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: var(--transition);
+        text-decoration: none;
+    }
+    .period-btn:hover {
+        color: var(--text-main);
+    }
+    .period-btn.active {
+        background: var(--primary);
+        color: #000000;
+    }
+    .progress-bar-container {
+        width: 100%;
+        height: 6px;
+        background: var(--border-color);
+        border-radius: 10px;
+        margin-top: 0.75rem;
+        overflow: hidden;
+    }
+    .progress-bar-fill {
+        height: 100%;
+        background: var(--primary);
+        border-radius: 10px;
+        transition: width 1s ease-out;
+    }
+    .recent-tx-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+    .recent-tx-table th {
+        padding: 0.75rem 1rem;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .recent-tx-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.9rem;
+    }
+    .recent-tx-table tr:last-child td {
+        border-bottom: none;
+    }
+    .text-success { color: var(--success); }
+
+    @media (max-width: 1024px) {
+        .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 650px) {
+        .kpi-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 2rem; font-weight: 800; letter-spacing: -1px;">Hola, {{ nombre }}</h1>
+        <p style="color: var(--text-secondary); font-size: 0.95rem;">Aquí tienes la radiografía de tu salud financiera.</p>
+    </div>
+
+    <div class="period-selector">
+        <a href="?periodo=mes" class="period-btn {% if periodo == 'mes' %}active{% endif %}">Mes</a>
+        <a href="?periodo=trimestre" class="period-btn {% if periodo == 'trimestre' %}active{% endif %}">90 Días</a>
+        <a href="?periodo=anio" class="period-btn {% if periodo == 'anio' %}active{% endif %}">Año</a>
+    </div>
+</header>
+
+{% if alertas_presupuesto %}
+<div style="margin-bottom: 1.5rem;">
+    {% for alerta in alertas_presupuesto %}
+    <div class="alert-banner {{ alerta.nivel }}">
+        <i class="ph-bold ph-warning-circle"></i>
+        <span>{{ alerta.texto }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-title">Patrimonio Neto</div>
+        <div class="kpi-value animate-number" style="color: var(--text-main);" data-final-text="{{ ahorro_acumulado | format_currency }}">0</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-title">Ingresos</div>
+        <div class="kpi-value animate-number" style="color: var(--success);" data-final-text="{{ ingresos }}">0</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-title">Gastos</div>
+        <div class="kpi-value animate-number" style="color: var(--danger);" data-final-text="{{ gastos }}">0</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-title">Tasa de Ahorro</div>
+        <div class="kpi-value" style="color: var(--primary);">{{ ratio_ahorro }}</div>
+    </div>
+</div>
+
+<div class="bento-grid" style="margin-top: 0;">
+
+    <div class="bento-card span-8" style="min-height: 380px;">
+        <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="ph ph-chart-line" style="color: var(--primary);"></i> Evolución del Saldo disponible
+        </h3>
+        <div style="flex: 1; position: relative; width: 100%; height: 100%;">
+            <canvas id="chartPatrimonio"></canvas>
+        </div>
+    </div>
+
+    <div class="bento-card span-4" style="justify-content: space-between; gap: 1.5rem;">
+        <div>
+            <h3 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="ph ph-target" style="color: var(--success);"></i> Meta Activa
+            </h3>
+            {% if meta_nombre %}
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem;">
+                    <span style="color: var(--text-main);">{{ meta_nombre }}</span>
+                    <span style="color: var(--text-secondary);">{{ ahorro_acumulado | format_currency }} / {{ meta_objetivo | format_currency }}</span>
+                </div>
+                {% set porcentaje = (ahorro_acumulado / meta_objetivo * 100) if meta_objetivo > 0 else 0 %}
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width: {{ [porcentaje, 100]|min }}%;"></div>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-top: 0.4rem; text-align: right;">
+                    {{ porcentaje | round(1) }}% Completado
+                </div>
+            {% else %}
+                <div style="padding: 1.5rem 1rem; text-align: center; border: 1px dashed var(--border-color); border-radius: 10px;">
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">No tienes objetivos activos.</p>
+                    <a href="{{ url_for('settings') }}" class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 6px;">Configurar</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div style="padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+            <h3 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="ph ph-hourglass" style="color: var(--warning);"></i> Colchón Financiero
+            </h3>
+            {% if runway is not none %}
+                <div style="display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.5rem;">
+                    <span style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;">{{ runway }}</span>
+                    <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-secondary);">meses de autonomía</span>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem; line-height: 1.4;">
+                    Tiempo estimado que podrías cubrir tus costes actuales basándote en la media de gastos de los últimos 3 meses.
+                </p>
+            {% else %}
+                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin-top: 0.5rem;">
+                    Se requieren un saldo positivo y un histórico de gastos operativos para proyectar tu autonomía.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bento-card span-12" style="padding: 0; overflow: hidden;">
+        <div style="padding: 1.5rem 1.75rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                <i class="ph ph-clock-counter-clockwise" style="color: var(--info);"></i> Últimas Operaciones
+            </h3>
+            <a href="{{ url_for('transactions') }}" style="color: var(--primary); font-size: 0.85rem; font-weight: 700; text-decoration: none;" exec>Ver historial completo →</a>
+        </div>
+
+        {% if movimientos %}
+            <div style="width: 100%; overflow-x: auto;">
+                <table class="recent-tx-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Concepto / Descripción</th>
+                            <th>Categoría</th>
+                            <th style="text-align: right;">Importe</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mov in movimientos %}
+                        <tr>
+                            <td style="color: var(--text-muted); font-size: 0.85rem;">{{ mov.fecha }}</td>
+                            <td style="font-weight: 700; color: var(--text-main);">{{ mov.concepto }}</td>
+                            <td>
+                                <span style="background: var(--bg-main); border: 1px solid var(--border-color); padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">
+                                    {{ mov.categoria }}
+                                </span>
+                            </td>
+                            <td style="text-align: right; font-weight: 800;" class="{{ 'text-success' if mov.tipo == 'ingreso' else '' }}">
+                                {{ '+' if mov.tipo == 'ingreso' else '-' }}{{ mov.importe | format_currency }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="padding: 4rem 2rem; text-align: center; color: var(--text-muted);">
+                <i class="ph ph-receipt" style="font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.75rem;"></i>
+                <p style="font-size: 0.95rem; font-weight: 600;">No hay movimientos registrados en este periodo.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const dataRaw = {{ chart_saldo_tiempo | tojson | safe }};
+
+        // 🛠️ 1. PROTECCIÓN CONTRA ESTADO VACÍO Y ANCLAJE
+        if (!dataRaw.labels || dataRaw.labels.length === 0) {
+            // Si no hay NINGÚN dato, forzamos una línea plana en 0 para mantener el diseño
+            dataRaw.labels = ['Sin actividad'];
+            dataRaw.data = [0];
+        } else if (dataRaw.labels.length === 1) {
+            // Si hay SOLO UN dato, anclamos a cero para que haya una línea visible
+            dataRaw.labels.unshift('Inicio');
+            dataRaw.data.unshift(0);
+        }
+
+        const ctx = document.getElementById('chartPatrimonio');
+        if (!ctx) return;
+
+        const style = getComputedStyle(document.documentElement);
+        const primaryColor = style.getPropertyValue('--primary').trim() || '#00E599';
+        const borderColor = style.getPropertyValue('--border-color').trim();
+        const textMuted = style.getPropertyValue('--text-muted').trim();
+
+        // 🛠️ 2. RENDERIZADO CON ANIMACIÓN FLUIDA
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dataRaw.labels,
+                datasets: [{
+                    label: 'Saldo Acumulado',
+                    data: dataRaw.data,
+                    borderColor: primaryColor,
+                    borderWidth: 3,
+                    pointBackgroundColor: primaryColor,
+                    pointHoverRadius: 7,
+                    tension: 0.3, // Suavizado
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                // AQUÍ ESTÁ LA MAGIA DE LA ANIMACIÓN
+                animation: {
+                    y: {
+                        duration: 1500, // 1.5 segundos de animación
+                        easing: 'easeOutQuart', // Efecto de frenado suave al final
+                        from: (ctx) => ctx.chart.scales.y ? ctx.chart.scales.y.getPixelForValue(0) : 0
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: textMuted, font: { weight: '600', size: 11 } }
+                    },
+                    y: {
+                        grid: { color: borderColor },
+                        ticks: {
+                            color: textMuted,
+                            font: { weight: '600', size: 11 },
+                            callback: function(value) { return value.toLocaleString('es-ES') + ' €'; }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

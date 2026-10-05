@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Historial de Movimientos - FinDash{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* CORRECCIÓN: Limpieza absoluta de espacios invisibles corruptos en el CSS */
+    .tx-container { width: 100%; overflow-x: auto; }
+    .table-premium { width: 100%; border-collapse: collapse; text-align: left; }
+    .table-premium th { padding: 1.25rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--border-color); background: rgba(255,255,255,0.01); white-space: nowrap; }
+    .table-premium td { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; font-size: 0.95rem; font-weight: 500; }
+    .table-premium tr:last-child td { border-bottom: none; }
+    .table-premium tr:hover { background: rgba(255,255,255,0.02); }
+    .concepto-cell { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cat-badge { background: var(--bg-main); border: 1px solid var(--border-color); padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+    .action-btns { display: flex; gap: 0.5rem; justify-content: flex-end; }
+    .btn-icon { background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-secondary); width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); text-decoration: none; }
+    .btn-icon:hover { color: var(--text-main); border-color: var(--text-muted); }
+    .btn-icon.danger:hover { color: var(--danger); border-color: var(--danger); background: rgba(255,68,68,0.1); }
+    .btn-icon.info:hover { color: var(--primary); border-color: var(--primary); background: rgba(0,229,153,0.1); }
+    .text-success { color: var(--success); }
+
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 1.5rem; }
+    .page-btn { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.5rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; text-decoration: none; transition: var(--transition); }
+    .page-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .page-btn.active { background: var(--primary); color: #000; border-color: var(--primary); }
+    .page-btn.disabled { opacity: 0.3; pointer-events: none; }
+
+    .empty-state-card { position: relative; overflow: hidden; text-align: center; padding: 5rem 2rem; background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: var(--radius); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; grid-column: span 12; }
+    .fake-chart-bg { position: absolute; bottom: 0; left: 0; right: 0; height: 60%; display: flex; align-items: flex-end; justify-content: center; opacity: 0.1; z-index: -1; pointer-events: none; gap: 12px; padding: 0 5%; }
+    .fake-bar { flex: 1; max-width: 45px; background: var(--primary); border-radius: 4px 4px 0 0; animation: pulseBar 3s infinite alternate ease-in-out; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0.1)); mask-image: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0.1)); }
+    .fake-bar.danger { background: var(--danger); }
+    .fake-bar:nth-child(1) { height: 30%; animation-delay: 0s; }
+    .fake-bar:nth-child(2) { height: 45%; animation-delay: -0.5s; }
+    .fake-bar:nth-child(3) { height: 25%; animation-delay: -1s; }
+    .fake-bar:nth-child(4) { height: 80%; animation-delay: -1.5s; }
+    .fake-bar:nth-child(5) { height: 60%; animation-delay: -2s; }
+    .fake-bar:nth-child(6) { height: 40%; animation-delay: -2.5s; }
+    .fake-bar:nth-child(7) { height: 95%; animation-delay: -3s; }
+    @keyframes pulseBar { 0% { transform: scaleY(0.85); opacity: 0.5; transform-origin: bottom; } 100% { transform: scaleY(1.05); opacity: 1; transform-origin: bottom; } }
+    .empty-demo-badge { background: transparent; color: var(--text-muted); padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem; border: 1px solid var(--border-color); display: inline-flex; align-items: center; gap: 0.5rem; pointer-events: none; user-select: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<header style="margin-bottom:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <div>
+        <h1 style="font-size:2rem;font-weight:800;letter-spacing:-1px;">Libro Mayor</h1>
+        <p style="color:var(--text-secondary);font-size:0.95rem;">Auditoría de todos los movimientos registrados.</p>
+    </div>
+    <div style="display:flex;gap:0.75rem;">
+        <a href="{{ url_for('exportar_csv') }}" class="btn-primary" style="background:transparent;border:1px solid var(--border-color);color:var(--text-main);font-size:0.85rem;padding:0.6rem 1.2rem;">
+            <i class="ph ph-download-simple"></i> CSV
+        </a>
+        <a href="{{ url_for('anadir') }}" class="btn-primary" style="font-size:0.85rem;padding:0.6rem 1.2rem;">
+            <i class="ph ph-plus"></i> Nuevo
+        </a>
+    </div>
+</header>
+
+<div class="bento-grid" style="margin-top:0;">
+    {% if movimientos %}
+        <div class="bento-card span-12" style="padding:0;overflow:hidden;">
+            <div class="tx-container">
+                <table class="table-premium">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Concepto</th>
+                            <th>Categoría</th>
+                            <th style="text-align:right;">Importe</th>
+                            <th style="text-align:right;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for mov in movimientos %}
+                        <tr>
+                            <td style="color:var(--text-muted);font-size:0.85rem;">{{ mov['fecha'] }}</td>
+                            <td class="concepto-cell" style="font-weight:700;color:var(--text-main);" title="{{ mov['concepto'] }}">{{ mov['concepto'] }}</td>
+                            <td>
+                                <span class="cat-badge">
+                                    <i class="ph ph-tag" style="color:var(--primary);"></i>
+                                    {{ mov['categoria'] }}
+                                </span>
+                            </td>
+                            <td style="text-align:right;font-weight:800;font-size:1.05rem;" class="{{ 'text-success' if mov['tipo'] == 'ingreso' else '' }}">
+                                {{ '+' if mov['tipo'] == 'ingreso' else '-' }}{{ mov['importe'] | format_currency }}
+                            </td>
+                            <td>
+                                <div class="action-btns">
+                                   <form method="POST" action="{{ url_for('duplicar', movimiento_id=mov['id']) }}" style="margin:0;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn-icon info" title="Duplicar entrada">
+        <i class="ph ph-copy"></i>
+    </button>
+</form>
+
+<form method="POST" action="{{ url_for('borrar', movimiento_id=mov['id']) }}" style="margin:0;" onsubmit="return confirm('¿Proceder con la eliminación de este registro?')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn-icon danger" title="Eliminar entrada">
+        <i class="ph ph-trash"></i>
+    </button>
+</form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if total_pages > 1 %}
+        <div class="span-12">
+            <div class="pagination">
+                <a href="?page={{ page - 1 }}" class="page-btn {% if page == 1 %}disabled{% endif %}">
+                    <i class="ph ph-caret-left"></i> Anterior
+                </a>
+                {% for p in range(1, total_pages + 1) %}
+                    {% if p == page %}
+                        <span class="page-btn active">{{ p }}</span>
+                    {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                        <a href="?page={{ p }}" class="page-btn">{{ p }}</a>
+                    {% elif p == page - 3 or p == page + 3 %}
+                        <span style="color:var(--text-muted);padding:0 0.25rem;">…</span>
+                    {% endif %}
+                {% endfor %}
+                <a href="?page={{ page + 1 }}" class="page-btn {% if page == total_pages %}disabled{% endif %}">
+                    Siguiente <i class="ph ph-caret-right"></i>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <div class="empty-state-card">
+            <div class="fake-chart-bg">
+                <div class="fake-bar"></div><div class="fake-bar danger"></div><div class="fake-bar"></div>
+                <div class="fake-bar"></div><div class="fake-bar danger"></div><div class="fake-bar"></div>
+                <div class="fake-bar"></div>
+            </div>
+            <div class="empty-demo-badge"><i class="ph-fill ph-magic-wand"></i> Modo Demostración</div>
+            <i class="ph-fill ph-receipt" style="font-size:3.5rem;color:var(--text-muted);margin-bottom:1rem;opacity:0.5;"></i>
+            <h3 style="font-size:1.5rem;font-weight:800;color:var(--text-main);margin-bottom:0.5rem;">Libro Mayor en Blanco</h3>
+            <p style="color:var(--text-secondary);max-width:450px;margin:0 auto 2rem;line-height:1.5;">Todavía no tienes movimientos. Aquí verás tu historial detallado en cuanto añadas tus primeras transacciones.</p>
+            <a href="{{ url_for('anadir') }}" class="btn-primary" style="padding:0.85rem 2rem;">
+                <i class="ph ph-plus-circle" style="font-size:1.2rem;"></i> Añadir primer movimiento
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

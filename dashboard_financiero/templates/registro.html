@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Cuenta - FinDash{% endblock %}
+
+{% block extra_head %}
+<style>
+    .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; background: var(--bg-main); }
+    .auth-card { display: flex; width: 100%; max-width: 1000px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.3); }
+    .auth-banner { flex: 1; padding: 4rem 3rem; background: linear-gradient(145deg, rgba(0,229,153,0.05) 0%, rgba(20,20,22,0.8) 100%); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; position: relative; overflow: hidden; }
+    .auth-banner-logo { font-size: 1.5rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 3rem; text-decoration: none; }
+    .auth-title { font-size: 2.2rem; font-weight: 800; line-height: 1.1; margin-bottom: 1rem; letter-spacing: -1px; }
+    .auth-subtitle { color: var(--text-secondary); font-size: 1.05rem; line-height: 1.5; margin-bottom: 2.5rem; }
+    .auth-features { display: flex; flex-direction: column; gap: 1.25rem; position: relative; z-index: 2; }
+    .feature-item { display: flex; align-items: center; gap: 1rem; font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
+    .feature-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(0,229,153,0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: 1px solid rgba(0,229,153,0.2); flex-shrink: 0; }
+    .auth-bg-icon { position: absolute; bottom: -30px; right: -30px; font-size: 14rem; color: var(--primary); opacity: 0.03; transform: rotate(-15deg); pointer-events: none; z-index: 1; }
+    .auth-form-box { flex: 1.1; padding: 4rem 3.5rem; display: flex; flex-direction: column; justify-content: center; background: var(--bg-main); }
+    .input-icon-wrapper { position: relative; display: flex; align-items: center; }
+    .input-icon-wrapper i.icon-left { position: absolute; left: 1.2rem; color: var(--text-muted); font-size: 1.2rem; pointer-events: none; }
+    .input-icon-wrapper .form-input { padding-left: 3rem !important; padding-top: 1rem !important; padding-bottom: 1rem !important; }
+    .auth-footer { margin-top: 2rem; text-align: center; font-size: 0.9rem; color: var(--text-secondary); }
+    .auth-footer a { color: var(--primary); font-weight: 700; text-decoration: none; transition: var(--transition); }
+    .auth-footer a:hover { text-decoration: underline; }
+    .password-hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem; display: flex; align-items: center; gap: 0.4rem; }
+    @media (max-width: 850px) {
+        .auth-card { flex-direction: column; }
+        .auth-banner { padding: 3rem 2rem; border-right: none; border-bottom: 1px solid var(--border-color); }
+        .auth-form-box { padding: 3rem 2rem; }
+        .auth-bg-icon { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+
+        <div class="auth-banner">
+            <a href="{{ url_for('index') }}" class="auth-banner-logo">
+                <i class="ph-fill ph-wallet" style="color:var(--primary);"></i> FinDash
+            </a>
+            <h1 class="auth-title">Crea tu cuenta gratuita</h1>
+            <p class="auth-subtitle">Empieza a gestionar tu patrimonio hoy mismo. Tus datos financieros, bajo tu absoluto control.</p>
+            <div class="auth-features">
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="ph ph-shield-check"></i></div>
+                    100% Privado y seguro.
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="ph ph-lightning"></i></div>
+                    Configuración en 1 minuto.
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="ph ph-chart-polar"></i></div>
+                    Analítica avanzada incluida.
+                </div>
+            </div>
+            <i class="ph-fill ph-rocket auth-bg-icon"></i>
+        </div>
+
+        <div class="auth-form-box">
+            <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:0.5rem;letter-spacing:-0.5px;">Crear cuenta</h2>
+            <p style="color:var(--text-secondary);font-size:0.95rem;margin-bottom:2.5rem;">Regístrate para empezar a operar en el sistema.</p>
+
+            <form method="POST" action="{{ url_for('registro') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label for="nombre">Nombre o Alias</label>
+                    <div class="input-icon-wrapper">
+                        <i class="ph ph-user icon-left"></i>
+                        <input type="text" id="nombre" name="nombre" class="form-input"
+                               placeholder="¿Cómo te llamamos?" required
+                               autocomplete="name" minlength="2" maxlength="50" autofocus>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Correo Electrónico</label>
+                    <div class="input-icon-wrapper">
+                        <i class="ph ph-envelope-simple icon-left"></i>
+                        <input type="email" id="email" name="email" class="form-input"
+                               placeholder="tu@email.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <div class="input-icon-wrapper">
+                        <i class="ph ph-lock-key icon-left"></i>
+                        <input type="password" id="password" name="password" class="form-input"
+                               placeholder="Mín. 6 caracteres" required
+                               minlength="6"
+                               pattern="(?=.*\d)(?=.*[a-zA-Z]).{6,}"
+                               title="Debe contener al menos 6 caracteres, incluyendo letras y números"
+                               autocomplete="new-password" style="padding-right: 3rem;">
+                        <button type="button" onclick="togglePassword('password', this)" style="position: absolute; right: 1rem; background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; padding: 0; display: flex; align-items: center; transition: color 0.2s;">
+                            <i class="ph ph-eye"></i>
+                        </button>
+                    </div>
+                    <div class="password-hint">
+                        <i class="ph ph-info"></i> Mínimo 6 caracteres con letras y números.
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:2.5rem;">
+                    <label for="password2">Confirmar Contraseña</label>
+                    <div class="input-icon-wrapper">
+                        <i class="ph ph-lock-key-open icon-left"></i>
+                        <input type="password" id="password2" name="password2" class="form-input"
+                               placeholder="Repite tu contraseña" required
+                               autocomplete="new-password" style="padding-right: 3rem;">
+                        <button type="button" onclick="togglePassword('password2', this)" style="position: absolute; right: 1rem; background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; padding: 0; display: flex; align-items: center; transition: color 0.2s;">
+                            <i class="ph ph-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width:100%;justify-content:center;padding:1.1rem;font-size:1rem;">
+                    Crear mi cuenta <i class="ph ph-user-plus"></i>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                ¿Ya tienes una cuenta? <a href="{{ url_for('login') }}">Inicia sesión aquí</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Validación client-side de confirmación de contraseña
+    const form = document.querySelector('form');
+    const password = document.getElementById('password');
+    const password2 = document.getElementById('password2');
+
+    form.addEventListener('submit', function(e) {
+        if (password.value !== password2.value) {
+            e.preventDefault();
+            password2.setCustomValidity('Las contraseñas no coinciden.');
+            password2.reportValidity();
+        } else {
+            password2.setCustomValidity('');
+        }
+    });
+
+    password2.addEventListener('input', function() {
+        if (password.value !== password2.value) {
+            password2.setCustomValidity('Las contraseñas no coinciden.');
+        } else {
+            password2.setCustomValidity('');
+        }
+    });
+</script>
+{% endblock %}
