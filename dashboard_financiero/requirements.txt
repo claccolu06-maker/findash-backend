@@ -1,5 +1,3 @@
-Flask==2.3.2
-gspread==5.10.0
-oauth2client==4.1.3
-psycopg2-binary==2.9.9
-gunicorn==20.1.0
+Flask&gt;=3.0.0 
+gunicorn&gt;=21.2.0 p
+sycopg2-binary&gt;=2.9.9
